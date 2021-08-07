@@ -1,5 +1,5 @@
 # prom2bq
-[![Build Status](https://travis-ci.org/ymyzk/prom2bq.svg?branch=master)](https://travis-ci.org/ymyzk/prom2bq)
+[![CI](https://github.com/ymyzk/prom2bq/actions/workflows/ci.yaml/badge.svg)](https://github.com/ymyzk/prom2bq/actions/workflows/ci.yaml)
 
 ## Usage
 ```console
