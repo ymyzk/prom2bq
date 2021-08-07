@@ -9,10 +9,12 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"github.com/prometheus/client_golang/api"
-	"github.com/prometheus/client_golang/api/prometheus/v1"
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"google.golang.org/api/option"
 )
+
+const ChunkSize = 10000
 
 type Item struct {
 	Time   time.Time
@@ -82,6 +84,13 @@ func ConvertToItems(data model.Matrix) []*Item {
 	return items
 }
 
+func CreateChunks(items []*Item, chunkSize int) (chunks [][]*Item) {
+	for chunkSize < len(items) {
+		items, chunks = items[chunkSize:], append(chunks, items[0:chunkSize:chunkSize])
+	}
+	return append(chunks, items)
+}
+
 func main() {
 	config, err := ParseOptions()
 	if err != nil {
@@ -113,10 +122,14 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error: %s\n", err)
 			os.Exit(1)
 		}
-		err = uploader.Put(ctx, ConvertToItems(data))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: %s\n", err)
-			os.Exit(1)
+		items := ConvertToItems(data)
+		fmt.Printf("Obtained %d records\n", len(items))
+		for _, chunk := range CreateChunks(items, ChunkSize) {
+			err = uploader.Put(ctx, chunk)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error: %s\n", err)
+				os.Exit(1)
+			}
 		}
 	}
 }
