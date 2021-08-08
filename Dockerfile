@@ -1,11 +1,9 @@
-FROM golang:1.16
-
+FROM golang:1.16 AS build
 WORKDIR /go/src/app
-
-COPY go.mod go.sum ./
-RUN go mod download
-
-COPY . .
+COPY . /go/src/app
+RUN go get -d -v ./...
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go install
 
-ENTRYPOINT ["/go/bin/prom2bq"]
+FROM gcr.io/distroless/static
+COPY --from=build /go/bin/prom2bq /
+ENTRYPOINT ["/prom2bq"]
